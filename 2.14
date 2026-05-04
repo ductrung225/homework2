@@ -1,0 +1,71 @@
+import skfuzzy as fuzz
+from skfuzzy import control as ctrl
+import numpy as np
+
+density = ctrl.Antecedent(np.arange(0, 100.1, 0.1), 'density')
+urgency = ctrl.Antecedent(np.arange(0, 100.1, 0.1), 'urgency')
+load = ctrl.Antecedent(np.arange(0, 100.1, 0.1), 'load')
+traffic = ctrl.Antecedent(np.arange(0, 100.1, 0.1), 'traffic')
+profit = ctrl.Antecedent(np.arange(0, 100.1, 0.1), 'profit')
+combine = ctrl.Consequent(np.arange(0, 10.1, 0.1), 'combine')
+priority = ctrl.Consequent(np.arange(0, 100.1, 0.1), 'priority')
+
+density['low'] = fuzz.trimf(density.universe, [0, 0, 30])
+density['medium'] = fuzz.trimf(density.universe, [20, 50, 70])
+density['high'] = fuzz.trimf(density.universe, [60, 100, 100])
+
+urgency['low'] = fuzz.trimf(urgency.universe, [0, 0, 30])
+urgency['medium'] = fuzz.trimf(urgency.universe, [20, 50, 70])
+urgency['high'] = fuzz.trimf(urgency.universe, [60, 100, 100])
+
+load['low'] = fuzz.trimf(load.universe, [0, 0, 30])
+load['medium'] = fuzz.trimf(load.universe, [20, 50, 70])
+load['high'] = fuzz.trimf(load.universe, [60, 100, 100])
+
+traffic['low'] = fuzz.trimf(traffic.universe, [0, 0, 30])
+traffic['medium'] = fuzz.trimf(traffic.universe, [20, 50, 70])
+traffic['high'] = fuzz.trimf(traffic.universe, [60, 100, 100])
+
+profit['low'] = fuzz.trimf(profit.universe, [0, 0, 30])
+profit['medium'] = fuzz.trimf(profit.universe, [20, 50, 70])
+profit['high'] = fuzz.trimf(profit.universe, [60, 100, 100])
+
+combine['few'] = fuzz.trimf(combine.universe, [0, 0, 3])
+combine['some'] = fuzz.trimf(combine.universe, [2, 5, 7])
+combine['many'] = fuzz.trimf(combine.universe, [6, 10, 10])
+
+priority['low'] = fuzz.trimf(priority.universe, [0, 0, 30])
+priority['medium'] = fuzz.trimf(priority.universe, [20, 50, 70])
+priority['high'] = fuzz.trimf(priority.universe, [60, 100, 100])
+
+density.view()
+urgency.view()
+load.view()
+traffic.view()
+profit.view()
+combine.view()
+priority.view()
+
+rule1 = ctrl.Rule(density['high'] & load['low'] & traffic['low'], combine['many'])
+rule2 = ctrl.Rule(density['medium'] & traffic['high'] & urgency['medium'], combine['some'])
+rule3 = ctrl.Rule(load['high'] & density['high'] & profit['medium'], combine['some'])
+rule4 = ctrl.Rule(density['low'] & urgency['high'] & traffic['medium'], combine['some'])
+rule5 = ctrl.Rule(profit['high'] & urgency['high'] & traffic['high'], combine['some'])
+rule6 = ctrl.Rule(urgency['high'] & profit['high'], priority['high'])
+rule7 = ctrl.Rule(urgency['medium'] & traffic['medium'], priority['medium'])
+rule8 = ctrl.Rule(urgency['low'] & density['high'] & profit['low'], priority['low'])
+
+system_ctrl = ctrl.ControlSystem([
+    rule1, rule2, rule3, rule4, rule5,
+    rule6, rule7, rule8])
+system = ctrl.ControlSystemSimulation(system_ctrl)
+system.input['density'] = 80
+system.input['urgency'] = 70
+system.input['load'] = 20
+system.input['traffic'] = 20
+system.input['profit'] = 70
+system.compute()
+print("Số lượng đơn hàng cần kết hợp:", system.output['combine'])
+print("Ưu tiên giao hàng:", system.output['priority'])
+combine.view(sim=system)
+priority.view(sim=system)
